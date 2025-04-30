@@ -1,138 +1,78 @@
 import 'package:flutter/material.dart';
-import 'package:free_dividend/widgets/asset_box.dart';
-import 'package:free_dividend/widgets/bottom_navbar.dart';
-import 'package:free_dividend/widgets/category_container.dart';
-import 'package:free_dividend/widgets/sub_title_text.dart';
+import 'package:free_dividend/models/stock.dart';
+import 'package:free_dividend/utils/formatter.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatelessWidget {
+  final List<StockModel> stocks = [
+    // StockModel(name: '삼성전자', principal: 3500, dividend: 1350),
+    // StockModel(name: 'KT&G', principal: 3000, dividend: 1350),
+  ];
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  late PageController _pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: 0, viewportFraction: 0.33);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+  HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final double totalDividend = stocks.fold(0, (sum, stock) => sum + stock.dividend);
+    final double totalPrincipal = stocks.fold(0, (sum, stock) => sum + stock.principal);
+    final String recoveryRate = (totalDividend / totalPrincipal * 100).toStringAsFixed(1);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Flexible(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        spacing: 10,
+      appBar: AppBar(title: Text('나의배당기록')),
+      body: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('총 회수율: $recoveryRate', style: TextStyle(fontSize: 20)),
+                Text('$totalDividend / $totalPrincipal', style: TextStyle(fontSize: 20)),
+              ],
+            ),
+            SizedBox(height: 20),
+            Flexible(
+              flex: 1,
+              child: Container(
+                decoration: BoxDecoration(color: Colors.amber.shade50),
+                child: ListView.builder(
+                  itemCount: stocks.length,
+                  itemBuilder: (context, index) {
+                    final stock = stocks[index];
+                    final rate = stock.dividend / stock.principal;
+
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 10),
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: index % 2 == 0 ? Colors.blue[50] : Colors.green[50],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            height: 60,
-                            width: 60,
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade200,
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [Text('Welcomeback'), Text('Olivai Blue!')],
+                          Text(stock.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text('회수율: ${(rate * 100).toStringAsFixed(1)}%'),
+                          Text('누적배당: ${formatWithCommas(stock.dividend)}'),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            borderRadius: BorderRadius.circular(5),
+                            value: stock.recoveryRate,
+                            minHeight: 10,
+                            backgroundColor: Colors.grey[300],
+                            color: index % 2 == 0 ? Colors.blue : Colors.green,
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(width: 1, color: Colors.grey.shade400),
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            height: 60,
-                            width: 60,
-                            child: Center(child: Icon(Icons.calendar_month, color: Colors.grey.shade400)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: '검색하세요.',
-                          suffixIcon: Icon(Icons.search_rounded),
-                          border: InputBorder.none,
-                          // isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: -9),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  SubTitleText(text: 'Popular Categories'),
-                  SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 5,
-                    children: [for (int i = 0; i < 10; i++) CategoryContainer(text: 'test-$i')],
-                  ),
-                  SizedBox(height: 40),
-                  SubTitleText(text: 'Most popular assets'),
-                  SizedBox(height: 10),
-                  Center(
-                    child: SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: 20,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            width: MediaQuery.of(context).size.width / 3,
-                            margin: EdgeInsets.only(right: 8),
-                            child: AssetsBox(
-                              icon: Icon(Icons.two_k_outlined, size: 30),
-                              assetName: 'Twitch',
-                              pricePM: '+ 12.17%',
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-          BottomNavBar(),
-        ],
+          ],
+        ),
       ),
+      floatingActionButton: FloatingActionButton.extended(onPressed: () {}, label: Text('종목추가'), icon: Icon(Icons.add)),
     );
   }
 }
